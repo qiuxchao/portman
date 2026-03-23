@@ -1,0 +1,21 @@
+{
+  "app.name": "PortMan",
+  "header.ports": "{{count}} 个端口",
+  "header.search": "搜索端口、进程、PID...",
+  "header.refresh": "刷新",
+  "table.port": "端口",
+  "table.protocol": "协议",
+  "table.address": "地址",
+  "table.pid": "PID",
+  "table.process": "进程",
+  "table.command": "命令",
+  "table.action": "操作",
+  "table.empty": "未检测到监听端口。",
+  "table.noMatch": "未找到匹配的端口。",
+  "scan.loading": "正在扫描端口...",
+  "kill.confirm": "确定终止「{{name}}」(PID: {{pid}}) 吗？",
+  "kill.title": "PortMan",
+  "copy.tooltip": "复制端口",
+  "copy.done": "已复制！",
+  "kill.tooltip": "终止进程"
+}

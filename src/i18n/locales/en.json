@@ -1,0 +1,21 @@
+{
+  "app.name": "PortMan",
+  "header.ports": "{{count}} ports",
+  "header.search": "Search port, process, PID...",
+  "header.refresh": "Refresh",
+  "table.port": "Port",
+  "table.protocol": "Protocol",
+  "table.address": "Address",
+  "table.pid": "PID",
+  "table.process": "Process",
+  "table.command": "Command",
+  "table.action": "Action",
+  "table.empty": "No listening ports detected.",
+  "table.noMatch": "No matching ports found.",
+  "scan.loading": "Scanning ports...",
+  "kill.confirm": "Kill \"{{name}}\" (PID: {{pid}})?",
+  "kill.title": "PortMan",
+  "copy.tooltip": "Copy port",
+  "copy.done": "Copied!",
+  "kill.tooltip": "Kill process"
+}

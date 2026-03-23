@@ -4,7 +4,14 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tauri + React + Typescript</title>
+    <title>PortMan</title>
+    <script>
+      (function() {
+        var t = localStorage.getItem('portman-theme');
+        if (t === 'dark') document.documentElement.classList.add('dark');
+        else if (t !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
+      })();
+    </script>
   </head>
 
   <body>

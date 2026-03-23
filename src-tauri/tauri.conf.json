@@ -12,9 +12,9 @@
   "app": {
     "windows": [
       {
-        "title": "portman",
-        "width": 800,
-        "height": 600
+        "title": "PortMan",
+        "width": 960,
+        "height": 640
       }
     ],
     "security": {
