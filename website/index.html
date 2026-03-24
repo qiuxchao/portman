@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="icon-128.png" />
+  <title>PortMan — Lightweight Port Manager</title>
+  <meta name="description" content="View listening ports, find processes, kill with one click. Built with Tauri." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+            mono: ['"SF Mono"', '"Fira Code"', '"Cascadia Code"', 'Consolas', 'monospace'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    @keyframes fade-in-up { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+    .animate-fade-in-up { animation: fade-in-up 0.8s ease-out both; }
+    .animate-float { animation: float 6s ease-in-out infinite; }
+    .delay-100 { animation-delay: 0.1s; }
+    .delay-200 { animation-delay: 0.2s; }
+    .delay-300 { animation-delay: 0.3s; }
+    .delay-400 { animation-delay: 0.4s; }
+    .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.06); }
+    .gradient-text { background: linear-gradient(135deg, #818cf8 0%, #6366f1 50%, #a78bfa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .glow { box-shadow: 0 0 60px rgba(99, 102, 241, 0.15), 0 0 120px rgba(129, 140, 248, 0.08); }
+  </style>
+</head>
+<body class="dark bg-[#09090b] text-zinc-100 antialiased">
+
+  <!-- Nav -->
+  <nav class="fixed top-0 w-full z-50 border-b border-white/5 bg-[#09090b]/80 backdrop-blur-xl">
+    <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <img src="icon-128.png" alt="PortMan" class="w-8 h-8 rounded-lg" />
+        <span class="font-semibold text-lg tracking-tight">PortMan</span>
+      </div>
+      <div class="hidden sm:flex items-center gap-8 text-sm text-zinc-400">
+        <a href="#features" class="hover:text-zinc-100 transition-colors" data-i18n="nav.features">Features</a>
+        <a href="#how-it-works" class="hover:text-zinc-100 transition-colors" data-i18n="nav.how">How It Works</a>
+        <a href="#download" class="hover:text-zinc-100 transition-colors" data-i18n="nav.download">Download</a>
+      </div>
+      <div class="flex items-center gap-3">
+        <button id="lang-toggle" class="text-xs px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition-colors text-zinc-400">中文</button>
+        <a href="#download" class="text-sm px-4 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors" data-i18n="nav.download">Download</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="relative pt-32 pb-20 overflow-hidden">
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-gradient-to-b from-indigo-500/10 via-purple-500/5 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+    <div class="relative max-w-6xl mx-auto px-6 text-center">
+      <div class="animate-fade-in-up">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-xs text-zinc-400 mb-8">
+          <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></span>
+          <span data-i18n="hero.badge">Open Source · Cross-Platform · Built with Tauri</span>
+        </div>
+      </div>
+      <h1 class="text-5xl sm:text-7xl font-bold tracking-tight leading-[1.1] mb-6 animate-fade-in-up delay-100" data-i18n-html="hero.title">Know Your Ports.<br class="sm:hidden" /> <span class="gradient-text">Kill with One Click.</span></h1>
+      <p class="text-lg sm:text-xl text-zinc-400 max-w-2xl mx-auto mb-10 animate-fade-in-up delay-200" data-i18n-html="hero.desc">See every listening port, which process owns it, and terminate it instantly.<br />No more <code class="text-zinc-300 bg-white/5 px-1.5 py-0.5 rounded text-base font-mono">lsof -i | grep LISTEN</code>.</p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-fade-in-up delay-300">
+        <a href="#download" class="px-8 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium hover:opacity-90 transition-opacity shadow-lg shadow-indigo-500/20" data-i18n="hero.cta">Free Download</a>
+        <a href="https://github.com/qiuxchao/portman" target="_blank" class="px-8 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors">GitHub →</a>
+      </div>
+
+      <!-- App Mockup -->
+      <div class="animate-fade-in-up delay-400 animate-float">
+        <div class="max-w-4xl mx-auto rounded-2xl glow overflow-hidden border border-white/10">
+          <div class="bg-zinc-900 border-b border-white/5 px-4 py-3 flex items-center gap-2">
+            <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+            <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+            <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+            <img src="icon-128.png" alt="" class="ml-2 w-4 h-4 rounded" />
+            <span class="text-xs text-zinc-500">PortMan</span>
+          </div>
+          <div class="bg-zinc-950 p-5" style="height: 380px;">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
+                <span class="text-sm font-semibold">PortMan</span>
+                <span class="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-zinc-400">12 ports</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="bg-white/5 rounded-lg px-3 py-1 text-xs text-zinc-500 w-44">Search port, process...</div>
+                <div class="bg-white/5 rounded-lg px-3 py-1 text-xs text-zinc-400">Refresh</div>
+              </div>
+            </div>
+            <!-- Table Header -->
+            <div class="grid grid-cols-[70px_60px_120px_60px_1fr_1fr_50px] gap-2 text-[10px] text-zinc-500 uppercase tracking-wider mb-2 px-1">
+              <span>Port</span><span>Proto</span><span>Address</span><span>PID</span><span>Process</span><span>Command</span><span class="text-right">Action</span>
+            </div>
+            <!-- Rows -->
+            <div class="space-y-0.5">
+              <div class="grid grid-cols-[70px_60px_120px_60px_1fr_1fr_50px] gap-2 items-center text-xs py-2 px-1 rounded-lg hover:bg-white/5">
+                <span class="font-mono font-semibold">3000</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded border border-blue-500/30 text-blue-400 w-fit">TCP</span>
+                <span class="font-mono text-zinc-500">*</span>
+                <span class="font-mono text-zinc-400">12847</span>
+                <span class="font-medium">node</span>
+                <span class="font-mono text-zinc-500 truncate">next dev</span>
+                <span class="text-right text-zinc-500">☠</span>
+              </div>
+              <div class="grid grid-cols-[70px_60px_120px_60px_1fr_1fr_50px] gap-2 items-center text-xs py-2 px-1 rounded-lg hover:bg-white/5">
+                <span class="font-mono font-semibold">3306</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded border border-blue-500/30 text-blue-400 w-fit">TCP</span>
+                <span class="font-mono text-zinc-500">127.0.0.1</span>
+                <span class="font-mono text-zinc-400">38184</span>
+                <span class="font-medium">mysqld</span>
+                <span class="font-mono text-zinc-500 truncate">/usr/local/mysql/bin/mysqld</span>
+                <span class="text-right text-zinc-500">☠</span>
+              </div>
+              <div class="grid grid-cols-[70px_60px_120px_60px_1fr_1fr_50px] gap-2 items-center text-xs py-2 px-1 rounded-lg hover:bg-white/5">
+                <span class="font-mono font-semibold">5173</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded border border-blue-500/30 text-blue-400 w-fit">TCP</span>
+                <span class="font-mono text-zinc-500">[::1]</span>
+                <span class="font-mono text-zinc-400">9521</span>
+                <span class="font-medium">node</span>
+                <span class="font-mono text-zinc-500 truncate">vite dev</span>
+                <span class="text-right text-zinc-500">☠</span>
+              </div>
+              <div class="grid grid-cols-[70px_60px_120px_60px_1fr_1fr_50px] gap-2 items-center text-xs py-2 px-1 rounded-lg hover:bg-white/5">
+                <span class="font-mono font-semibold">8080</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded border border-blue-500/30 text-blue-400 w-fit">TCP</span>
+                <span class="font-mono text-zinc-500">*</span>
+                <span class="font-mono text-zinc-400">4201</span>
+                <span class="font-medium">java</span>
+                <span class="font-mono text-zinc-500 truncate">java -jar spring-boot.jar</span>
+                <span class="text-right text-zinc-500">☠</span>
+              </div>
+              <div class="grid grid-cols-[70px_60px_120px_60px_1fr_1fr_50px] gap-2 items-center text-xs py-2 px-1 rounded-lg hover:bg-white/5">
+                <span class="font-mono font-semibold">8440</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded border border-blue-500/30 text-blue-400 w-fit">TCP</span>
+                <span class="font-mono text-zinc-500">127.0.0.1</span>
+                <span class="font-mono text-zinc-400">1794</span>
+                <span class="font-medium">DingTalk</span>
+                <span class="font-mono text-zinc-500 truncate">—</span>
+                <span class="text-right text-zinc-500">☠</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="py-24">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl sm:text-4xl font-bold tracking-tight mb-4" data-i18n="features.title">Everything You Need</h2>
+        <p class="text-zinc-400 text-lg max-w-xl mx-auto" data-i18n="features.desc">Port 8080 already in use? Find out who, and fix it in seconds.</p>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div class="glass rounded-2xl p-6 hover:border-white/10 transition-colors">
+          <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-4"><svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg></div>
+          <h3 class="font-semibold mb-2" data-i18n="f1.title">Full Port Overview</h3>
+          <p class="text-sm text-zinc-400 leading-relaxed" data-i18n="f1.desc">See every listening port with protocol, address, PID, process name, and launch command.</p>
+        </div>
+        <div class="glass rounded-2xl p-6 hover:border-white/10 transition-colors">
+          <div class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center mb-4"><svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></div>
+          <h3 class="font-semibold mb-2" data-i18n="f2.title">One-Click Kill</h3>
+          <p class="text-sm text-zinc-400 leading-relaxed" data-i18n="f2.desc">Terminate any process with a native confirmation dialog. No terminal needed.</p>
+        </div>
+        <div class="glass rounded-2xl p-6 hover:border-white/10 transition-colors">
+          <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center mb-4"><svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></div>
+          <h3 class="font-semibold mb-2" data-i18n="f3.title">Instant Search</h3>
+          <p class="text-sm text-zinc-400 leading-relaxed" data-i18n="f3.desc">Filter by port number, process name, or PID. Find what you need instantly.</p>
+        </div>
+        <div class="glass rounded-2xl p-6 hover:border-white/10 transition-colors">
+          <div class="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center mb-4"><svg class="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg></div>
+          <h3 class="font-semibold mb-2" data-i18n="f4.title">Cross-Platform</h3>
+          <p class="text-sm text-zinc-400 leading-relaxed" data-i18n="f4.desc">Works on macOS (lsof), Windows (netstat), and Linux. Same clean UI everywhere.</p>
+        </div>
+        <div class="glass rounded-2xl p-6 hover:border-white/10 transition-colors">
+          <div class="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center mb-4"><svg class="w-5 h-5 text-rose-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg></div>
+          <h3 class="font-semibold mb-2" data-i18n="f5.title">i18n Support</h3>
+          <p class="text-sm text-zinc-400 leading-relaxed" data-i18n="f5.desc">English and Chinese. Auto-detects your OS language setting.</p>
+        </div>
+        <div class="glass rounded-2xl p-6 hover:border-white/10 transition-colors">
+          <div class="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center mb-4"><svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div>
+          <h3 class="font-semibold mb-2" data-i18n="f6.title">Lightweight</h3>
+          <p class="text-sm text-zinc-400 leading-relaxed" data-i18n="f6.desc">Built with Tauri + Rust. ~5MB install, launches instantly, minimal memory usage.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section id="how-it-works" class="py-24 border-t border-white/5">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl sm:text-4xl font-bold tracking-tight mb-4" data-i18n="how.title">How It Works</h2>
+        <p class="text-zinc-400 text-lg max-w-xl mx-auto" data-i18n="how.desc">Three steps. Zero config.</p>
+      </div>
+      <div class="max-w-3xl mx-auto space-y-0">
+        <div class="flex gap-6">
+          <div class="flex flex-col items-center"><div class="w-10 h-10 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-sm font-bold text-indigo-400 shrink-0">1</div><div class="w-px flex-1 bg-white/10 my-2"></div></div>
+          <div class="pb-12">
+            <h3 class="font-semibold mb-2" data-i18n="step1.title">Open PortMan</h3>
+            <p class="text-sm text-zinc-400 leading-relaxed" data-i18n="step1.desc">All listening ports are scanned automatically on launch. No setup required.</p>
+          </div>
+        </div>
+        <div class="flex gap-6">
+          <div class="flex flex-col items-center"><div class="w-10 h-10 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-sm font-bold text-purple-400 shrink-0">2</div><div class="w-px flex-1 bg-white/10 my-2"></div></div>
+          <div class="pb-12">
+            <h3 class="font-semibold mb-2" data-i18n="step2.title">Find the port</h3>
+            <p class="text-sm text-zinc-400 leading-relaxed" data-i18n-html="step2.desc">Search or scroll to find the port. See exactly which process is using it and how it was started.</p>
+          </div>
+        </div>
+        <div class="flex gap-6">
+          <div class="flex flex-col items-center"><div class="w-10 h-10 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-sm font-bold text-blue-400 shrink-0">3</div></div>
+          <div>
+            <h3 class="font-semibold mb-2" data-i18n="step3.title">Kill or copy</h3>
+            <p class="text-sm text-zinc-400 leading-relaxed" data-i18n="step3.desc">Click the kill button to terminate the process, or copy the port number to your clipboard.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Download -->
+  <section id="download" class="py-24 border-t border-white/5">
+    <div class="max-w-6xl mx-auto px-6 text-center">
+      <h2 class="text-3xl sm:text-4xl font-bold tracking-tight mb-4" data-i18n="dl.title">Download Now</h2>
+      <p class="text-zinc-400 text-lg mb-10" data-i18n="dl.desc">Free, open source, no sign-up required.</p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+        <a href="https://github.com/qiuxchao/portman/releases" class="flex items-center gap-3 px-8 py-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors min-w-[220px]">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          <div class="text-left"><div class="text-[10px] text-zinc-500">Download for</div><div class="text-sm font-medium">macOS</div></div>
+        </a>
+        <a href="https://github.com/qiuxchao/portman/releases" class="flex items-center gap-3 px-8 py-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors min-w-[220px]">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5L11.5 4v7.7H3V5.5zm0 8.8l8.5.1V22L3 20.3v-6zm9.5-9.4L22 3.5v8.2h-9.5V4.9zm0 9.1H22v8.4l-9.5-1.4v-7z"/></svg>
+          <div class="text-left"><div class="text-[10px] text-zinc-500">Download for</div><div class="text-sm font-medium">Windows</div></div>
+        </a>
+        <a href="https://github.com/qiuxchao/portman/releases" class="flex items-center gap-3 px-8 py-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors min-w-[220px]">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12.504 0c-.155 0-.311.015-.466.046l-2.24.465c-.313.065-.546.318-.546.64v1.66H5.96c-.552 0-1 .448-1 1v2h-1c-.552 0-1 .448-1 1v12c0 .552.448 1 1 1h16c.552 0 1-.448 1-1v-12c0-.552-.448-1-1-1h-1v-2c0-.552-.448-1-1-1h-3.293V1.15c0-.322-.233-.575-.546-.64l-2.24-.465A2.37 2.37 0 0012.504 0zM12 2a1 1 0 110 2 1 1 0 010-2zM7 8h10v2H7V8z"/></svg>
+          <div class="text-left"><div class="text-[10px] text-zinc-500">Download for</div><div class="text-sm font-medium">Linux</div></div>
+        </a>
+      </div>
+      <p class="text-sm text-zinc-500" data-i18n="dl.note">Download the latest version from GitHub Releases for your platform.</p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="border-t border-white/5 py-12">
+    <div class="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2 text-zinc-500 text-sm">
+        <img src="icon-128.png" alt="PortMan" class="w-5 h-5 rounded" />
+        <span data-i18n="footer.tag">PortMan · Open Source</span>
+      </div>
+      <div class="flex items-center gap-6 text-sm text-zinc-500">
+        <a href="https://github.com/qiuxchao/portman" target="_blank" class="hover:text-zinc-300 transition-colors">GitHub</a>
+        <a href="https://github.com/qiuxchao/portman/releases" class="hover:text-zinc-300 transition-colors">Releases</a>
+        <a href="https://github.com/qiuxchao/portman/blob/main/LICENSE" class="hover:text-zinc-300 transition-colors">MIT License</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- i18n -->
+  <script>
+  (function() {
+    var i18n = {
+      en: {
+        "nav.features": "Features", "nav.how": "How It Works", "nav.download": "Download",
+        "hero.badge": "Open Source · Cross-Platform · Built with Tauri",
+        "hero.title": 'Know Your Ports.<br class="sm:hidden" /> <span class="gradient-text">Kill with One Click.</span>',
+        "hero.desc": 'See every listening port, which process owns it, and terminate it instantly.<br />No more <code class="text-zinc-300 bg-white/5 px-1.5 py-0.5 rounded text-base font-mono">lsof -i | grep LISTEN</code>.',
+        "hero.cta": "Free Download",
+        "features.title": "Everything You Need", "features.desc": "Port 8080 already in use? Find out who, and fix it in seconds.",
+        "f1.title": "Full Port Overview", "f1.desc": "See every listening port with protocol, address, PID, process name, and launch command.",
+        "f2.title": "One-Click Kill", "f2.desc": "Terminate any process with a native confirmation dialog. No terminal needed.",
+        "f3.title": "Instant Search", "f3.desc": "Filter by port number, process name, or PID. Find what you need instantly.",
+        "f4.title": "Cross-Platform", "f4.desc": "Works on macOS (lsof), Windows (netstat), and Linux. Same clean UI everywhere.",
+        "f5.title": "i18n Support", "f5.desc": "English and Chinese. Auto-detects your OS language setting.",
+        "f6.title": "Lightweight", "f6.desc": "Built with Tauri + Rust. ~5MB install, launches instantly, minimal memory usage.",
+        "how.title": "How It Works", "how.desc": "Three steps. Zero config.",
+        "step1.title": "Open PortMan", "step1.desc": "All listening ports are scanned automatically on launch. No setup required.",
+        "step2.title": "Find the port", "step2.desc": "Search or scroll to find the port. See exactly which process is using it and how it was started.",
+        "step3.title": "Kill or copy", "step3.desc": "Click the kill button to terminate the process, or copy the port number to your clipboard.",
+        "dl.title": "Download Now", "dl.desc": "Free, open source, no sign-up required.", "dl.note": "Download the latest version from GitHub Releases for your platform.",
+        "footer.tag": "PortMan · Open Source"
+      },
+      zh: {
+        "nav.features": "功能", "nav.how": "原理", "nav.download": "下载",
+        "hero.badge": "开源免费 · 跨平台 · 基于 Tauri",
+        "hero.title": '端口一目了然，<br class="sm:hidden" /><span class="gradient-text">一键终止进程。</span>',
+        "hero.desc": '查看所有监听端口，找到占用的进程，立即终止。<br />告别 <code class="text-zinc-300 bg-white/5 px-1.5 py-0.5 rounded text-base font-mono">lsof -i | grep LISTEN</code>。',
+        "hero.cta": "免费下载",
+        "features.title": "你需要的都在这里", "features.desc": "8080 端口被占用？几秒钟搞定。",
+        "f1.title": "端口全览", "f1.desc": "查看所有监听端口的协议、地址、PID、进程名和启动命令。",
+        "f2.title": "一键终止", "f2.desc": "点击即终止进程，带原生确认弹窗，无需打开终端。",
+        "f3.title": "即时搜索", "f3.desc": "按端口号、进程名、PID 快速过滤，瞬间找到目标。",
+        "f4.title": "跨平台", "f4.desc": "支持 macOS (lsof)、Windows (netstat)、Linux，界面统一。",
+        "f5.title": "多语言", "f5.desc": "中英双语，自动检测系统语言。",
+        "f6.title": "极致轻量", "f6.desc": "基于 Tauri + Rust，安装包仅 ~5MB，启动快，内存占用低。",
+        "how.title": "工作原理", "how.desc": "三步搞定，无需配置。",
+        "step1.title": "打开 PortMan", "step1.desc": "启动即自动扫描所有监听端口，无需任何配置。",
+        "step2.title": "找到端口", "step2.desc": "搜索或滚动找到目标端口，查看是哪个进程在占用。",
+        "step3.title": "终止或复制", "step3.desc": "点击终止按钮结束进程，或复制端口号到剪贴板。",
+        "dl.title": "立即下载", "dl.desc": "免费、开源、无需注册。", "dl.note": "前往 GitHub Releases 下载对应平台的最新版本。",
+        "footer.tag": "PortMan · 开源免费"
+      }
+    };
+    var lang = localStorage.getItem('portman-site-lang') || 'en';
+    var btn = document.getElementById('lang-toggle');
+    function apply(l) {
+      lang = l;
+      localStorage.setItem('portman-site-lang', l);
+      document.documentElement.lang = l === 'zh' ? 'zh-CN' : 'en';
+      document.title = l === 'zh' ? 'PortMan — 轻量级端口管理工具' : 'PortMan — Lightweight Port Manager';
+      btn.textContent = l === 'zh' ? 'EN' : '中文';
+      var t = i18n[l];
+      document.querySelectorAll('[data-i18n]').forEach(function(el) {
+        var key = el.getAttribute('data-i18n');
+        if (t[key] !== undefined) el.textContent = t[key];
+      });
+      document.querySelectorAll('[data-i18n-html]').forEach(function(el) {
+        var key = el.getAttribute('data-i18n-html');
+        if (t[key] !== undefined) el.innerHTML = t[key];
+      });
+    }
+    btn.addEventListener('click', function() { apply(lang === 'en' ? 'zh' : 'en'); });
+    apply(lang);
+  })();
+  </script>
+</body>
+</html>
